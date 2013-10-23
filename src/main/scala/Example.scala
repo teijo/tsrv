@@ -14,6 +14,9 @@ class App extends unfiltered.filter.Plan {
   implicit val formats = native.Serialization.formats(NoTypeHints)
 
   def intent = Directive.Intent {
+    case GET(Path("/")) =>
+      success(Ok ~> ResponseString("Hello"))
+
     case GET(Path("/record")) =>
       success(Ok ~> ResponseString(write(Tournament(id = 123, teams = List("A", "B")))))
 
@@ -27,9 +30,7 @@ class App extends unfiltered.filter.Plan {
 
 object Server {
   def main(args: Array[String]) {
-    unfiltered.jetty.Http.anylocal.context("/assets") {
-      _.resources(new java.net.URL(getClass().getResource("/www/css"), "."))
-    }.filter(new App).run({ svr =>
+    unfiltered.jetty.Http.local(8080).filter(new App).run({ svr =>
       unfiltered.util.Browser.open(svr.url)
     }, { svr =>
     })
