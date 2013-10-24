@@ -18,7 +18,7 @@ class App extends unfiltered.filter.Plan {
       success(Ok ~> ResponseString("Hello"))
 
     case GET(Path("/record")) =>
-      success(Ok ~> ResponseString(write(Tournament(id = 123, teams = List("A", "B")))))
+      success(Ok ~> ResponseString("readResponse("+write(Tournament(id = 123, teams = List("A", "B")))+")"))
 
     case POST(Path("/record")) =>
       success(Ok ~> ResponseString(write(CreateResponse(123))))
