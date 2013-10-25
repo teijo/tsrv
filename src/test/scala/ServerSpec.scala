@@ -4,7 +4,7 @@ import org.specs._
 
 import scalaj.http.{HttpOptions, Http}
 
-object ExampleSpec extends Specification with unfiltered.spec.jetty.Served {
+object ServerSpec extends Specification with unfiltered.spec.jetty.Served {
   def setup = { _.filter(new App) }
 
   "Client interface" should {
