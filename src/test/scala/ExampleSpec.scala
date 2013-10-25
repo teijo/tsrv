@@ -2,20 +2,25 @@ package com.example
 
 import org.specs._
 
-import dispatch.classic.Http
+import scalaj.http.{HttpOptions, Http}
 
 object ExampleSpec extends Specification with unfiltered.spec.jetty.Served {
-
   def setup = { _.filter(new App) }
 
-  val http = new Http
-  
-  "The example app" should {
-    "serve unfiltered requests" in {
-      val status = http x (host as_str) {
-        case (code, _, _, _) => code
-      }
-      status must_== 200
+  "Client interface" should {
+    "return a record" in {
+      val result = Http.get(s"${server.url}record").asString
+      result must_== """readResponse({"id":123,"teams":["A","B"]})"""
+    }
+
+    "store a record" in {
+      val result = Http.post(s"${server.url}record").asString
+      result must_== """{"id":123}"""
+    }
+
+    "update a record" in {
+      val result = Http(s"${server.url}record").option(HttpOptions.method("PUT")).asString
+      result must_== """{"id":123}"""
     }
   }
 }

@@ -11,7 +11,8 @@ libraryDependencies ++= Seq(
   "net.databinder" %% "unfiltered-filter" % "0.7.0",
   "net.databinder" %% "unfiltered-jetty" % "0.7.0",
   "net.databinder" %% "unfiltered-spec" % "0.7.0" % "test",
-  "org.json4s" %% "json4s-native" % "3.2.5"
+  "org.json4s" %% "json4s-native" % "3.2.5",
+  "org.scalaj" %% "scalaj-http" % "0.3.10"
 )
 
 resolvers ++= Seq(
