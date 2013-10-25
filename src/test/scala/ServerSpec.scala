@@ -1,4 +1,4 @@
-package com.example
+package tsrv
 
 import org.specs._
 
