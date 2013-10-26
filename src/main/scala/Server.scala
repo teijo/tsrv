@@ -30,7 +30,9 @@ class App extends unfiltered.filter.Plan {
 
 object Server {
   def main(args: Array[String]) {
-    unfiltered.jetty.Http.local(8080).filter(new App).run({ svr =>
+    unfiltered.jetty.Http.local(8080).context("/js") {
+      _.resources(new java.net.URL(getClass().getResource("/www/js/t.js"), "."))
+    }.filter(new App).run({ svr =>
       unfiltered.util.Browser.open(svr.url)
     }, { svr =>
     })
