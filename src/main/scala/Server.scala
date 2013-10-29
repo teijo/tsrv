@@ -14,6 +14,9 @@ class App extends unfiltered.filter.Plan {
   implicit val formats = native.Serialization.formats(NoTypeHints)
 
   def intent = Directive.Intent {
+    case OPTIONS(Path("/record")) =>
+      success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~> ResponseHeader("Access-Control-Allow-Methods", Set("GET", "POST", "PUT", "OPTIONS")))
+
     case GET(Path("/")) =>
       success(Ok ~> ResponseString("Hello"))
 
