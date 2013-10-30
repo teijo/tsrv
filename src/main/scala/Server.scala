@@ -9,10 +9,12 @@ import org.json4s.native.Serialization.read
 import unfiltered.directives._, Directives._
 
 
-case class GroupTeam(id: Integer, name: String)
+case class Team(id: Integer, name: String)
 case class GroupMatchTeam(team: Integer, score: Integer)
 case class GroupMatch(round: Integer, a: GroupMatchTeam, b: GroupMatchTeam)
-case class GroupRequest(teams: List[GroupTeam], matches: List[GroupMatch])
+case class GroupRequest(teams: List[Team], matches: List[GroupMatch])
+
+case class BracketRequest(teams: List[List[Team]], results: List[List[List[List[Integer]]]])
 
 case class CreateResponse(id: Integer)
 case class Tournament(id: Integer, teams: List[String])
@@ -23,6 +25,7 @@ class App extends unfiltered.filter.Plan {
   def intent = Directive.Intent {
     case OPTIONS(Path("/record")) =>
       success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
+        ResponseHeader("Access-Control-Allow-Headers", Set("Content-Type", "Authorization", "X-Requested-With")) ~>
         ResponseHeader("Access-Control-Allow-Methods", Set("GET", "POST", "PUT", "OPTIONS")))
 
     case GET(Path("/")) =>
@@ -32,9 +35,11 @@ class App extends unfiltered.filter.Plan {
       success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
         ResponseString(write(Tournament(id = 123, teams = List("A", "B")))))
 
-    case POST(Path("/record")) =>
+    case req @ POST(Path("/record")) =>
+      val bracketRecord = read[BracketRequest](Body.string(req))
+      println(bracketRecord)
       success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
-        ResponseString(write(CreateResponse(123))))
+        ResponseString(write(bracketRecord)))
 
     case req @ PUT(Path("/record")) =>
       val groupRecord = read[GroupRequest](Body.string(req))
