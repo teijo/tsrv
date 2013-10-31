@@ -28,31 +28,31 @@ class App extends unfiltered.filter.Plan {
         ResponseHeader("Access-Control-Allow-Headers", Set("Content-Type", "Authorization", "X-Requested-With")) ~>
         ResponseHeader("Access-Control-Allow-Methods", Set("GET", "POST", "PUT", "OPTIONS")))
 
-    case GET(Path("/")) =>
-      out("Hello")
+    case req @ GET(Path("/")) =>
+      out(() => "Hello")
 
-    case GET(Path("/record")) =>
-      out(write(Tournament(id = 123, teams = List("A", "B"))))
+    case req @ GET(Path("/record")) =>
+      out(() => write(Tournament(id = 123, teams = List("A", "B"))))
 
     case req @ Path("/bracket") => req match {
       case POST(_) =>
-        out(write(BracketRequest(teams = List(), results = List())))
+        out(() => write(BracketRequest(teams = List(), results = List())))
       case PUT(_) =>
-        out(write(read[BracketRequest](Body.string(req))))
+        out(() => write(read[BracketRequest](Body.string(req))))
     }
 
     case req @ Path("/group") => req match {
       case POST(_) =>
-        out(write(GroupRequest(teams = List(), matches = List())))
+        out(() => write(GroupRequest(teams = List(), matches = List())))
       case PUT(_) =>
-        out(write(read[GroupRequest](Body.string(req))))
+        out(() => write(read[GroupRequest](Body.string(req))))
     }
   }
 
-  def out(response: String): Directive[Any, Nothing, AnyRef with ResponseFunction[Any]] = {
+  def out(createResponse: () => String): Directive[Any, Nothing, AnyRef with ResponseFunction[Any]] = {
     success(Ok ~>
       ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
-      ResponseString(response))
+      ResponseString(createResponse()))
   }
 }
 
