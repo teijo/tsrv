@@ -50,9 +50,16 @@ class App extends unfiltered.filter.Plan {
   }
 
   def out(createResponse: () => String): Directive[Any, Nothing, AnyRef with ResponseFunction[Any]] = {
-    success(Ok ~>
-      ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
-      ResponseString(createResponse()))
+    try {
+      val response: String = createResponse()
+      success(Ok ~>
+        ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
+        ResponseString(response))
+    } catch {
+      case _: Throwable => success(BadRequest ~>
+        ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
+        ResponseString("""{"error":"Invalid input JSON"}"""))
+    }
   }
 }
 
