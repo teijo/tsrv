@@ -7,6 +7,7 @@ import org.json4s.native.Serialization.write
 import org.json4s.native.Serialization.read
 
 import unfiltered.directives._, Directives._
+import org.json4s.ParserUtil.ParseException
 
 
 case class Team(id: Integer, name: String)
@@ -56,7 +57,7 @@ class App extends unfiltered.filter.Plan {
         ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
         ResponseString(response))
     } catch {
-      case _: Throwable => success(BadRequest ~>
+      case _: ParseException => success(BadRequest ~>
         ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
         ResponseString("""{"error":"Invalid input JSON"}"""))
     }
