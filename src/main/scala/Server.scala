@@ -23,7 +23,7 @@ class App extends unfiltered.filter.Plan {
   implicit val formats = native.Serialization.formats(NoTypeHints)
 
   def intent = Directive.Intent {
-    case OPTIONS(Path("/record")) =>
+    case OPTIONS(Path(Seg(_ :: Nil))) =>
       success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
         ResponseHeader("Access-Control-Allow-Headers", Set("Content-Type", "Authorization", "X-Requested-With")) ~>
         ResponseHeader("Access-Control-Allow-Methods", Set("GET", "POST", "PUT", "OPTIONS")))
@@ -35,16 +35,23 @@ class App extends unfiltered.filter.Plan {
       success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
         ResponseString(write(Tournament(id = 123, teams = List("A", "B")))))
 
-    case req @ POST(Path("/record")) =>
-      val bracketRecord = read[BracketRequest](Body.string(req))
-      println(bracketRecord)
+    case req @ POST(Path("/group")) =>
       success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
-        ResponseString(write(bracketRecord)))
+        ResponseString(write(GroupRequest(teams = List(), matches = List()))))
 
-    case req @ PUT(Path("/record")) =>
+    case req @ POST(Path("/bracket")) =>
+      success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
+        ResponseString(write(BracketRequest(teams = List(), results = List()))))
+
+    case req @ PUT(Path("/group")) =>
       val groupRecord = read[GroupRequest](Body.string(req))
       success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
         ResponseString(write(groupRecord)))
+
+    case req @ PUT(Path("/bracket")) =>
+      val bracketRecord = read[BracketRequest](Body.string(req))
+      success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
+        ResponseString(write(bracketRecord)))
   }
 }
 
