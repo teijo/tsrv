@@ -35,23 +35,25 @@ class App extends unfiltered.filter.Plan {
       success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
         ResponseString(write(Tournament(id = 123, teams = List("A", "B")))))
 
-    case req @ POST(Path("/group")) =>
-      success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
-        ResponseString(write(GroupRequest(teams = List(), matches = List()))))
+    case req @ Path("/bracket") => req match {
+      case POST(_) =>
+        success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
+          ResponseString(write(BracketRequest(teams = List(), results = List()))))
+      case PUT(_) =>
+        val bracketRecord = read[BracketRequest](Body.string(req))
+        success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
+          ResponseString(write(bracketRecord)))
+    }
 
-    case req @ POST(Path("/bracket")) =>
-      success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
-        ResponseString(write(BracketRequest(teams = List(), results = List()))))
-
-    case req @ PUT(Path("/group")) =>
-      val groupRecord = read[GroupRequest](Body.string(req))
-      success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
-        ResponseString(write(groupRecord)))
-
-    case req @ PUT(Path("/bracket")) =>
-      val bracketRecord = read[BracketRequest](Body.string(req))
-      success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
-        ResponseString(write(bracketRecord)))
+    case req @ Path("/group") => req match {
+      case POST(_) =>
+        success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
+          ResponseString(write(GroupRequest(teams = List(), matches = List()))))
+      case PUT(_) =>
+        val groupRecord = read[GroupRequest](Body.string(req))
+        success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
+          ResponseString(write(groupRecord)))
+    }
   }
 }
 
