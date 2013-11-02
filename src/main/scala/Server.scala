@@ -8,6 +8,7 @@ import org.json4s.native.Serialization.read
 
 import unfiltered.directives._, Directives._
 import org.json4s.ParserUtil.ParseException
+import scalaj.http.{HttpOptions, Http}
 
 case class Team(id: Integer, name: String)
 case class GroupMatchTeam(team: Integer, score: Integer)
@@ -29,14 +30,26 @@ class App extends unfiltered.filter.Plan {
 
     case req @ Path("/bracket") => req match {
       case POST(_) =>
-        out(() => write(Bracket(teams = List(), results = List())))
+        out(() => {
+          val groupJSON = write(Bracket(teams = List(), results = List()))
+          val url = "http://127.0.0.1:8098/riak/brackets/test"
+          val response = Http.postData(url, groupJSON).header("content-type", "application/json")
+          println(s"Create bracket: ${response.responseCode}")
+          groupJSON
+        })
       case PUT(_) =>
         out(() => write(read[Bracket](Body.string(req))))
     }
 
     case req @ Path("/group") => req match {
       case POST(_) =>
-        out(() => write(Group(teams = List(), matches = List())))
+        out(() => {
+          val groupJSON = write(Group(teams = List(), matches = List()))
+          val url = "http://127.0.0.1:8098/riak/groups/test"
+          val response = Http.postData(url, groupJSON).header("content-type", "application/json")
+          println(s"Create group: ${response.responseCode}")
+          groupJSON
+        })
       case PUT(_) =>
         out(() => write(read[Group](Body.string(req))))
     }
