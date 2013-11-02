@@ -9,16 +9,11 @@ import org.json4s.native.Serialization.read
 import unfiltered.directives._, Directives._
 import org.json4s.ParserUtil.ParseException
 
-
 case class Team(id: Integer, name: String)
 case class GroupMatchTeam(team: Integer, score: Integer)
 case class GroupMatch(round: Integer, a: GroupMatchTeam, b: GroupMatchTeam)
 case class GroupRequest(teams: List[Team], matches: List[GroupMatch])
-
 case class BracketRequest(teams: List[List[Team]], results: List[List[List[List[Integer]]]])
-
-case class CreateResponse(id: Integer)
-case class Tournament(id: Integer, teams: List[String])
 
 class App extends unfiltered.filter.Plan {
   implicit val formats = native.Serialization.formats(NoTypeHints)
@@ -31,9 +26,6 @@ class App extends unfiltered.filter.Plan {
 
     case req @ GET(Path("/")) =>
       out(() => "Hello")
-
-    case req @ GET(Path("/record")) =>
-      out(() => write(Tournament(id = 123, teams = List("A", "B"))))
 
     case req @ Path("/bracket") => req match {
       case POST(_) =>
