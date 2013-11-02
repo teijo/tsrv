@@ -12,8 +12,8 @@ import org.json4s.ParserUtil.ParseException
 case class Team(id: Integer, name: String)
 case class GroupMatchTeam(team: Integer, score: Integer)
 case class GroupMatch(round: Integer, a: GroupMatchTeam, b: GroupMatchTeam)
-case class GroupRequest(teams: List[Team], matches: List[GroupMatch])
-case class BracketRequest(teams: List[List[Team]], results: List[List[List[List[Integer]]]])
+case class Group(teams: List[Team], matches: List[GroupMatch])
+case class Bracket(teams: List[List[Team]], results: List[List[List[List[Integer]]]])
 
 class App extends unfiltered.filter.Plan {
   implicit val formats = native.Serialization.formats(NoTypeHints)
@@ -29,16 +29,16 @@ class App extends unfiltered.filter.Plan {
 
     case req @ Path("/bracket") => req match {
       case POST(_) =>
-        out(() => write(BracketRequest(teams = List(), results = List())))
+        out(() => write(Bracket(teams = List(), results = List())))
       case PUT(_) =>
-        out(() => write(read[BracketRequest](Body.string(req))))
+        out(() => write(read[Bracket](Body.string(req))))
     }
 
     case req @ Path("/group") => req match {
       case POST(_) =>
-        out(() => write(GroupRequest(teams = List(), matches = List())))
+        out(() => write(Group(teams = List(), matches = List())))
       case PUT(_) =>
-        out(() => write(read[GroupRequest](Body.string(req))))
+        out(() => write(read[Group](Body.string(req))))
     }
   }
 
