@@ -39,7 +39,7 @@ class App extends unfiltered.filter.Plan {
       case POST(_) =>
         out(() => {
           val jsonString = write(Bracket(teams = List(), results = List()))
-          val status = create(TournamentType.Bracket, jsonString)
+          val status = dbCreate(TournamentType.Bracket, jsonString)
           jsonString
         })
     }
@@ -48,7 +48,7 @@ class App extends unfiltered.filter.Plan {
       case POST(_) =>
         out(() => {
           val jsonString = write(Group(teams = List(), matches = List()))
-          val status = create(TournamentType.Group, jsonString)
+          val status = dbCreate(TournamentType.Group, jsonString)
           jsonString
         })
     }
@@ -56,29 +56,38 @@ class App extends unfiltered.filter.Plan {
     case req @ Path(Seg("group" :: id :: Nil)) => req match {
       case PUT(_) =>
         val jsonString = write(read[Group](Body.string(req)))
-        update(TournamentType.Group, id, jsonString)
+        dbUpdate(TournamentType.Group, id, jsonString)
         out(() => jsonString)
+      case req @ GET(_) =>
+        out(() => dbRead(TournamentType.Group, id))
     }
 
     case req @ Path(Seg("bracket" :: id :: Nil)) => req match {
       case PUT(_) =>
         val jsonString = write(read[Bracket](Body.string(req)))
-        update(TournamentType.Bracket, id, jsonString)
+        dbUpdate(TournamentType.Bracket, id, jsonString)
         out(() => jsonString)
+      case req @ GET(_) =>
+        out(() => dbRead(TournamentType.Bracket, id))
     }
 
   }
 
-  def create(tType: TournamentType, jsonData: String): Integer = {
+  def dbCreate(tType: TournamentType, jsonData: String): Integer = {
     val url = s"http://127.0.0.1:8098/riak/${tType}"
     val (status, headers, body) = Http.postData(url, jsonData).header("content-type", "application/json").asHeadersAndParse(Http.readString)
     status
   }
 
-  def update(tType: TournamentType, id: String, jsonData: String): Integer = {
+  def dbUpdate(tType: TournamentType, id: String, jsonData: String): Integer = {
     val url = s"http://127.0.0.1:8098/riak/${tType}/${id}"
     val (status, headers, body) = Http.postData(url, jsonData).header("content-type", "application/json").asHeadersAndParse(Http.readString)
     status
+  }
+
+  def dbRead(tType: TournamentType, id: String): String = {
+    val url = s"http://127.0.0.1:8098/riak/${tType}/${id}"
+    Http.get(url).asString
   }
 
   def out(createResponse: () => String): Directive[Any, Nothing, AnyRef with ResponseFunction[Any]] = {
