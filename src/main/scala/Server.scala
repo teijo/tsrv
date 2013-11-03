@@ -9,7 +9,7 @@ import org.json4s.native.Serialization.read
 
 import unfiltered.directives._, Directives._
 import org.json4s.ParserUtil.ParseException
-import scalaj.http.{HttpOptions, Http}
+import scalaj.http.{HttpException, HttpOptions, Http}
 
 case class Team(id: Integer, name: String)
 case class GroupMatchTeam(team: Integer, score: Integer)
@@ -34,14 +34,14 @@ class App extends unfiltered.filter.Plan {
         ResponseHeader("Access-Control-Allow-Methods", Set("GET", "POST", "PUT", "OPTIONS")))
 
     case req @ GET(Path("/")) =>
-      out(() => "Hello")
+      out(() => ("Hello", Ok))
 
     case req @ Path("/bracket") => req match {
       case POST(_) =>
         out(() => {
           val jsonString = write(Bracket(teams = List(), results = List()))
           val status = dbCreate(TournamentType.Bracket, jsonString)
-          jsonString
+          (jsonString, Ok)
         })
     }
 
@@ -50,7 +50,7 @@ class App extends unfiltered.filter.Plan {
         out(() => {
           val jsonString = write(Group(teams = List(), matches = List()))
           val status = dbCreate(TournamentType.Group, jsonString)
-          jsonString
+          (jsonString, Ok)
         })
     }
 
@@ -58,7 +58,7 @@ class App extends unfiltered.filter.Plan {
       case PUT(_) =>
         val jsonString = write(read[Group](Body.string(req)))
         dbUpdate(TournamentType.Group, id, jsonString)
-        out(() => jsonString)
+        out(() => (jsonString, Ok))
       case req @ GET(_) =>
         out(() => dbRead(TournamentType.Group, id))
     }
@@ -67,7 +67,7 @@ class App extends unfiltered.filter.Plan {
       case PUT(_) =>
         val jsonString = write(read[Bracket](Body.string(req)))
         dbUpdate(TournamentType.Bracket, id, jsonString)
-        out(() => jsonString)
+        out(() => (jsonString, Ok))
       case req @ GET(_) =>
         out(() => dbRead(TournamentType.Bracket, id))
     }
@@ -86,15 +86,22 @@ class App extends unfiltered.filter.Plan {
     status
   }
 
-  def dbRead(tType: TournamentType, id: String): String = {
+  def dbRead(tType: TournamentType, id: String): (String, Status) = {
     val url = s"${server}/${tType}/${id}"
-    Http.get(url).asString
+    try {
+      val (status, headers, body) = Http.get(url).asHeadersAndParse(Http.readString)
+      (body, Ok)
+    } catch {
+      case e: HttpException =>
+        println(e)
+        ("""{"error":"Not found"}""", NotFound)
+    }
   }
 
-  def out(createResponse: () => String): Directive[Any, Nothing, AnyRef with ResponseFunction[Any]] = {
+  def out(createResponse: () => (String, Status)): Directive[Any, Nothing, AnyRef with ResponseFunction[Any]] = {
     try {
-      val response: String = createResponse()
-      success(Ok ~>
+      val (response: String, status: Status) = createResponse()
+      success(status ~>
         ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
         ResponseString(response))
     } catch {
