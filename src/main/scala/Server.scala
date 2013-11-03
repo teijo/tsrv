@@ -1,5 +1,6 @@
 package tsrv
 
+import tsrv.TournamentType.TournamentType
 import unfiltered.request._
 import unfiltered.response._
 import org.json4s._
@@ -16,11 +17,17 @@ case class GroupMatch(round: Integer, a: GroupMatchTeam, b: GroupMatchTeam)
 case class Group(teams: List[Team], matches: List[GroupMatch])
 case class Bracket(teams: List[List[Team]], results: List[List[List[List[Integer]]]])
 
+object TournamentType extends Enumeration {
+  type TournamentType = Value
+  val Bracket = Value("bracket")
+  val Group = Value("group")
+}
+
 class App extends unfiltered.filter.Plan {
   implicit val formats = native.Serialization.formats(NoTypeHints)
 
   def intent = Directive.Intent {
-    case OPTIONS(Path(Seg(_ :: Nil))) =>
+    case OPTIONS(Path(Seg(_ :: Nil))) | OPTIONS(Path(Seg(_ :: _ :: Nil))) =>
       success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
         ResponseHeader("Access-Control-Allow-Headers", Set("Content-Type", "Authorization", "X-Requested-With")) ~>
         ResponseHeader("Access-Control-Allow-Methods", Set("GET", "POST", "PUT", "OPTIONS")))
@@ -31,28 +38,47 @@ class App extends unfiltered.filter.Plan {
     case req @ Path("/bracket") => req match {
       case POST(_) =>
         out(() => {
-          val groupJSON = write(Bracket(teams = List(), results = List()))
-          val url = "http://127.0.0.1:8098/riak/brackets/test"
-          val response = Http.postData(url, groupJSON).header("content-type", "application/json")
-          println(s"Create bracket: ${response.responseCode}")
-          groupJSON
+          val jsonString = write(Bracket(teams = List(), results = List()))
+          val status = create(TournamentType.Bracket, jsonString)
+          jsonString
         })
-      case PUT(_) =>
-        out(() => write(read[Bracket](Body.string(req))))
     }
 
     case req @ Path("/group") => req match {
       case POST(_) =>
         out(() => {
-          val groupJSON = write(Group(teams = List(), matches = List()))
-          val url = "http://127.0.0.1:8098/riak/groups/test"
-          val response = Http.postData(url, groupJSON).header("content-type", "application/json")
-          println(s"Create group: ${response.responseCode}")
-          groupJSON
+          val jsonString = write(Group(teams = List(), matches = List()))
+          val status = create(TournamentType.Group, jsonString)
+          jsonString
         })
-      case PUT(_) =>
-        out(() => write(read[Group](Body.string(req))))
     }
+
+    case req @ Path(Seg("group" :: id :: Nil)) => req match {
+      case PUT(_) =>
+        val jsonString = write(read[Group](Body.string(req)))
+        update(TournamentType.Group, id, jsonString)
+        out(() => jsonString)
+    }
+
+    case req @ Path(Seg("bracket" :: id :: Nil)) => req match {
+      case PUT(_) =>
+        val jsonString = write(read[Bracket](Body.string(req)))
+        update(TournamentType.Bracket, id, jsonString)
+        out(() => jsonString)
+    }
+
+  }
+
+  def create(tType: TournamentType, jsonData: String): Integer = {
+    val url = s"http://127.0.0.1:8098/riak/${tType}"
+    val (status, headers, body) = Http.postData(url, jsonData).header("content-type", "application/json").asHeadersAndParse(Http.readString)
+    status
+  }
+
+  def update(tType: TournamentType, id: String, jsonData: String): Integer = {
+    val url = s"http://127.0.0.1:8098/riak/${tType}/${id}"
+    val (status, headers, body) = Http.postData(url, jsonData).header("content-type", "application/json").asHeadersAndParse(Http.readString)
+    status
   }
 
   def out(createResponse: () => String): Directive[Any, Nothing, AnyRef with ResponseFunction[Any]] = {
