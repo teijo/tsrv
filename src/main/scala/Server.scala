@@ -97,7 +97,6 @@ class App extends unfiltered.filter.Plan {
       (body, Ok)
     } catch {
       case e: HttpException =>
-        println(e)
         ("""{"error":"Not found"}""", NotFound)
     }
   }
