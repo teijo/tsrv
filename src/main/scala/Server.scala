@@ -54,23 +54,27 @@ class App extends unfiltered.filter.Plan {
         })
     }
 
-    case req @ Path(Seg("group" :: id :: Nil)) => req match {
-      case PUT(_) =>
-        val jsonString = write(read[Group](Body.string(req)))
-        dbUpdate(TournamentType.Group, id, jsonString)
-        out(() => (jsonString, Ok))
-      case req @ GET(_) =>
-        out(() => dbRead(TournamentType.Group, id))
-    }
+    case req @ Path(Seg("group" :: id :: Nil)) =>
+      implicit val tType = TournamentType.Group
+      req match {
+        case PUT(_) =>
+          val jsonString = write(read[Group](Body.string(req)))
+          dbUpdate(id, jsonString)
+          out(() => (jsonString, Ok))
+        case req@GET(_) =>
+          out(() => dbRead(id))
+      }
 
-    case req @ Path(Seg("bracket" :: id :: Nil)) => req match {
-      case PUT(_) =>
-        val jsonString = write(read[Bracket](Body.string(req)))
-        dbUpdate(TournamentType.Bracket, id, jsonString)
-        out(() => (jsonString, Ok))
-      case req @ GET(_) =>
-        out(() => dbRead(TournamentType.Bracket, id))
-    }
+    case req @ Path(Seg("bracket" :: id :: Nil)) =>
+      implicit val tType: TournamentType = TournamentType.Bracket
+      req match {
+        case PUT(_) =>
+          val jsonString = write(read[Bracket](Body.string(req)))
+          dbUpdate(id, jsonString)
+          out(() => (jsonString, Ok))
+        case req@GET(_) =>
+          out(() => dbRead(id))
+      }
 
   }
 
@@ -80,13 +84,13 @@ class App extends unfiltered.filter.Plan {
     status
   }
 
-  def dbUpdate(tType: TournamentType, id: String, jsonData: String): Integer = {
+  def dbUpdate(id: String, jsonData: String)(implicit tType: TournamentType): Integer = {
     val url = s"${server}/${tType}/${id}"
     val (status, headers, body) = Http.postData(url, jsonData).header("content-type", "application/json").asHeadersAndParse(Http.readString)
     status
   }
 
-  def dbRead(tType: TournamentType, id: String): (String, Status) = {
+  def dbRead(id: String)(implicit tType: TournamentType): (String, Status) = {
     val url = s"${server}/${tType}/${id}"
     try {
       val (status, headers, body) = Http.get(url).asHeadersAndParse(Http.readString)
