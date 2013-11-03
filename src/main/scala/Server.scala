@@ -40,8 +40,7 @@ class App extends unfiltered.filter.Plan {
       case POST(_) =>
         out(() => {
           val jsonString = write(Bracket(teams = List(), results = List()))
-          val status = dbCreate(TournamentType.Bracket, jsonString)
-          (jsonString, Ok)
+          dbCreate(TournamentType.Bracket, jsonString)
         })
     }
 
@@ -49,8 +48,7 @@ class App extends unfiltered.filter.Plan {
       case POST(_) =>
         out(() => {
           val jsonString = write(Group(teams = List(), matches = List()))
-          val status = dbCreate(TournamentType.Group, jsonString)
-          (jsonString, Ok)
+          dbCreate(TournamentType.Group, jsonString)
         })
     }
 
@@ -59,8 +57,7 @@ class App extends unfiltered.filter.Plan {
       req match {
         case PUT(_) =>
           val jsonString = write(read[Group](Body.string(req)))
-          dbUpdate(id, jsonString)
-          out(() => (jsonString, Ok))
+          out(() => dbUpdate(id, jsonString))
         case req@GET(_) =>
           out(() => dbRead(id))
       }
@@ -70,24 +67,23 @@ class App extends unfiltered.filter.Plan {
       req match {
         case PUT(_) =>
           val jsonString = write(read[Bracket](Body.string(req)))
-          dbUpdate(id, jsonString)
-          out(() => (jsonString, Ok))
+          out(() => dbUpdate(id, jsonString))
         case req@GET(_) =>
           out(() => dbRead(id))
       }
 
   }
 
-  def dbCreate(tType: TournamentType, jsonData: String): Integer = {
+  def dbCreate(tType: TournamentType, jsonData: String): (String, Status) = {
     val url = s"${server}/${tType}"
     val (status, headers, body) = Http.postData(url, jsonData).header("content-type", "application/json").asHeadersAndParse(Http.readString)
-    status
+    (jsonData, Ok)
   }
 
-  def dbUpdate(id: String, jsonData: String)(implicit tType: TournamentType): Integer = {
+  def dbUpdate(id: String, jsonData: String)(implicit tType: TournamentType): (String, Status) = {
     val url = s"${server}/${tType}/${id}"
     val (status, headers, body) = Http.postData(url, jsonData).header("content-type", "application/json").asHeadersAndParse(Http.readString)
-    status
+    (jsonData, Ok)
   }
 
   def dbRead(id: String)(implicit tType: TournamentType): (String, Status) = {
