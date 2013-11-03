@@ -24,6 +24,7 @@ object TournamentType extends Enumeration {
 }
 
 class App extends unfiltered.filter.Plan {
+  val server = "http://127.0.0.1:8098/riak"
   implicit val formats = native.Serialization.formats(NoTypeHints)
 
   def intent = Directive.Intent {
@@ -74,19 +75,19 @@ class App extends unfiltered.filter.Plan {
   }
 
   def dbCreate(tType: TournamentType, jsonData: String): Integer = {
-    val url = s"http://127.0.0.1:8098/riak/${tType}"
+    val url = s"${server}/${tType}"
     val (status, headers, body) = Http.postData(url, jsonData).header("content-type", "application/json").asHeadersAndParse(Http.readString)
     status
   }
 
   def dbUpdate(tType: TournamentType, id: String, jsonData: String): Integer = {
-    val url = s"http://127.0.0.1:8098/riak/${tType}/${id}"
+    val url = s"${server}/${tType}/${id}"
     val (status, headers, body) = Http.postData(url, jsonData).header("content-type", "application/json").asHeadersAndParse(Http.readString)
     status
   }
 
   def dbRead(tType: TournamentType, id: String): String = {
-    val url = s"http://127.0.0.1:8098/riak/${tType}/${id}"
+    val url = s"${server}/${tType}/${id}"
     Http.get(url).asString
   }
 
