@@ -24,7 +24,8 @@ object TournamentType extends Enumeration {
 }
 
 class App extends unfiltered.filter.Plan {
-  val server = "http://127.0.0.1:8098/riak"
+  val serverRoot = "http://127.0.0.1:8098"
+  val serverData = s"${serverRoot}/riak"
   implicit val formats = native.Serialization.formats(NoTypeHints)
 
   def intent = Directive.Intent {
@@ -36,21 +37,29 @@ class App extends unfiltered.filter.Plan {
     case req @ GET(Path("/")) =>
       out(() => ("Hello", Ok))
 
-    case req @ Path("/bracket") => req match {
-      case POST(_) =>
-        out(() => {
-          val jsonString = write(Bracket(teams = List(), results = List()))
-          dbCreate(TournamentType.Bracket, jsonString)
-        })
-    }
+    case req @ Path("/bracket") =>
+      implicit val tType = TournamentType.Bracket
+      req match {
+        case GET(_) =>
+          out(() => dbList())
+        case POST(_) =>
+          out(() => {
+            val jsonString = write(Bracket(teams = List(), results = List()))
+            dbCreate(jsonString)
+          })
+      }
 
-    case req @ Path("/group") => req match {
-      case POST(_) =>
-        out(() => {
-          val jsonString = write(Group(teams = List(), matches = List()))
-          dbCreate(TournamentType.Group, jsonString)
-        })
-    }
+    case req @ Path("/group") =>
+      implicit val tType = TournamentType.Group
+       req match {
+         case GET(_) =>
+           out(() => dbList())
+         case POST(_) =>
+           out(() => {
+             val jsonString = write(Group(teams = List(), matches = List()))
+             dbCreate(jsonString)
+           })
+       }
 
     case req @ Path(Seg("group" :: id :: Nil)) =>
       implicit val tType = TournamentType.Group
@@ -74,20 +83,26 @@ class App extends unfiltered.filter.Plan {
 
   }
 
-  def dbCreate(tType: TournamentType, jsonData: String): (String, Status) = {
-    val url = s"${server}/${tType}"
+  def dbList()(implicit tType: TournamentType): (String, Status) = {
+    val url = s"${serverRoot}/buckets/${tType}/keys?keys=true"
+    val (status, headers, body) = Http.get(url).asHeadersAndParse(Http.readString)
+    (body, Ok)
+  }
+
+  def dbCreate(jsonData: String)(implicit tType: TournamentType): (String, Status) = {
+    val url = s"${serverData}/${tType}"
     val (status, headers, body) = Http.postData(url, jsonData).header("content-type", "application/json").asHeadersAndParse(Http.readString)
     (jsonData, Ok)
   }
 
   def dbUpdate(id: String, jsonData: String)(implicit tType: TournamentType): (String, Status) = {
-    val url = s"${server}/${tType}/${id}"
+    val url = s"${serverData}/${tType}/${id}"
     val (status, headers, body) = Http.postData(url, jsonData).header("content-type", "application/json").asHeadersAndParse(Http.readString)
     (jsonData, Ok)
   }
 
   def dbRead(id: String)(implicit tType: TournamentType): (String, Status) = {
-    val url = s"${server}/${tType}/${id}"
+    val url = s"${serverData}/${tType}/${id}"
     try {
       val (status, headers, body) = Http.get(url).asHeadersAndParse(Http.readString)
       (body, Ok)
