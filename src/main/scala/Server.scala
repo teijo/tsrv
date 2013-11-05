@@ -67,7 +67,7 @@ class App extends unfiltered.filter.Plan {
         case PUT(_) =>
           val jsonString = write(read[Group](Body.string(req)))
           out(() => dbUpdate(id, jsonString))
-        case req@GET(_) =>
+        case GET(_) =>
           out(() => dbRead(id))
       }
 
@@ -77,7 +77,7 @@ class App extends unfiltered.filter.Plan {
         case PUT(_) =>
           val jsonString = write(read[Bracket](Body.string(req)))
           out(() => dbUpdate(id, jsonString))
-        case req@GET(_) =>
+        case GET(_) =>
           out(() => dbRead(id))
       }
 
