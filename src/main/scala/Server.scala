@@ -69,6 +69,8 @@ class App extends unfiltered.filter.Plan {
           out(() => dbUpdate(id, jsonString))
         case GET(_) =>
           out(() => dbRead(id))
+        case DELETE(_) =>
+          out(() => dbDelete(id))
       }
 
     case req @ Path(Seg("bracket" :: id :: Nil)) =>
@@ -79,6 +81,8 @@ class App extends unfiltered.filter.Plan {
           out(() => dbUpdate(id, jsonString))
         case GET(_) =>
           out(() => dbRead(id))
+        case DELETE(_) =>
+          out(() => dbDelete(id))
       }
 
   }
@@ -87,6 +91,17 @@ class App extends unfiltered.filter.Plan {
     val url = s"${serverRoot}/buckets/${tType}/keys?keys=true"
     val (status, headers, body) = Http.get(url).asHeadersAndParse(Http.readString)
     (body, Ok)
+  }
+
+  def dbDelete(id: String)(implicit tType: TournamentType): (String, Status) = {
+    val url = s"${serverData}/${tType}/${id}"
+    try {
+      val (status, headers, body) = Http(url).option(HttpOptions.method("DELETE")).asHeadersAndParse(Http.readString)
+      ( """{"delete":"ok"}""", Ok)
+    } catch {
+      case e: HttpException =>
+        ( """{"error":"Not found"}""", NotFound)
+    }
   }
 
   def dbCreate(jsonData: String)(implicit tType: TournamentType): (String, Status) = {
