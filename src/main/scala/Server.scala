@@ -32,7 +32,7 @@ class App extends unfiltered.filter.Plan {
     case OPTIONS(Path(Seg(_ :: Nil))) | OPTIONS(Path(Seg(_ :: _ :: Nil))) =>
       success(Ok ~> ResponseHeader("Access-Control-Allow-Origin", Set("*")) ~>
         ResponseHeader("Access-Control-Allow-Headers", Set("Content-Type", "Authorization", "X-Requested-With")) ~>
-        ResponseHeader("Access-Control-Allow-Methods", Set("GET", "POST", "PUT", "OPTIONS")))
+        ResponseHeader("Access-Control-Allow-Methods", Set("GET", "POST", "PUT", "DELETE", "OPTIONS")))
 
     case req @ GET(Path("/")) =>
       out(() => ("Hello", Ok))
