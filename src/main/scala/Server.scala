@@ -11,7 +11,7 @@ import unfiltered.directives._, Directives._
 import org.json4s.ParserUtil.ParseException
 import scalaj.http.{HttpException, HttpOptions, Http}
 
-case class Team(id: Integer, name: String)
+case class Team(id: Integer, name: String, format: String, data: Map[String,String])
 case class GroupMatchTeam(team: Integer, score: Integer)
 case class GroupMatch(round: Integer, a: GroupMatchTeam, b: GroupMatchTeam)
 case class Group(teams: List[Team], matches: List[GroupMatch])
