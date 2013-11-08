@@ -16,6 +16,8 @@ case class GroupMatchTeam(team: Integer, score: Integer)
 case class GroupMatch(round: Integer, a: GroupMatchTeam, b: GroupMatchTeam)
 case class Group(teams: List[Team], matches: List[GroupMatch])
 case class Bracket(teams: List[List[Team]], results: List[List[List[List[Integer]]]])
+case class CreateGroup(id: String, data: Group)
+case class CreateBracket(id: String, data: Bracket)
 
 object TournamentType extends Enumeration {
   type TournamentType = Value
@@ -44,8 +46,10 @@ class App extends unfiltered.filter.Plan {
           out(() => dbList())
         case POST(_) =>
           out(() => {
-            val jsonString = write(Bracket(teams = List(), results = List()))
-            dbCreate(jsonString)
+            val bracket: Bracket = Bracket(teams = List(), results = List())
+            val jsonString = write(bracket)
+            val (id, status) = dbCreate(jsonString)
+            (write(CreateBracket(id = id, data = bracket)), status)
           })
       }
 
@@ -56,8 +60,10 @@ class App extends unfiltered.filter.Plan {
            out(() => dbList())
          case POST(_) =>
            out(() => {
-             val jsonString = write(Group(teams = List(), matches = List()))
-             dbCreate(jsonString)
+             val group: Group = Group(teams = List(), matches = List())
+             val jsonString = write(group)
+             val (id, status) = dbCreate(jsonString)
+             (write(CreateGroup(id = id, data = group)), status)
            })
        }
 
@@ -107,7 +113,8 @@ class App extends unfiltered.filter.Plan {
   def dbCreate(jsonData: String)(implicit tType: TournamentType): (String, Status) = {
     val url = s"${serverData}/${tType}"
     val (status, headers, body) = Http.postData(url, jsonData).header("content-type", "application/json").asHeadersAndParse(Http.readString)
-    (jsonData, Ok)
+    val id: String = headers("Location").head.split("/").last
+    (id, Ok)
   }
 
   def dbUpdate(id: String, jsonData: String)(implicit tType: TournamentType): (String, Status) = {
