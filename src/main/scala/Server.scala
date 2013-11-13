@@ -46,7 +46,10 @@ class App extends unfiltered.filter.Plan {
           out(() => dbList())
         case POST(_) =>
           out(() => {
-            val bracket: Bracket = Bracket(teams = List(), results = List())
+            val bracket: Bracket = Bracket(teams = List(List(
+              Team(id = 1, name = "Team 1", format = "", data = Map()),
+              Team(id = 2, name = "Team 2", format = "", data = Map())
+            )), results = List())
             val jsonString = write(bracket)
             val (id, status) = dbCreate(jsonString)
             (write(CreateBracket(id = id, data = bracket)), status)
