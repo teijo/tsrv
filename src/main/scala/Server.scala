@@ -18,11 +18,14 @@ case class Group(teams: List[Team], matches: List[GroupMatch])
 case class Bracket(teams: List[List[Team]], results: List[List[List[List[Integer]]]])
 case class CreateGroup(id: String, data: Group)
 case class CreateBracket(id: String, data: Bracket)
+case class User(username: String, password: String, email: String)
+case class CreateUser(id: String, data: User)
 
 object TournamentType extends Enumeration {
   type TournamentType = Value
   val Bracket = Value("bracket")
   val Group = Value("group")
+  val User = Value("user")
 }
 
 class App extends unfiltered.filter.Plan {
@@ -94,6 +97,17 @@ class App extends unfiltered.filter.Plan {
           out(() => dbDelete(id))
       }
 
+    case req @ Path("/user") =>
+      implicit val tType = TournamentType.User
+      req match {
+        case POST(_) =>
+          out(() => {
+            val user: User = read[User](Body.string(req))
+            val jsonString = write(user)
+            val (id, status) = dbCreate(jsonString)
+            (write(CreateUser(id = id, data = user)), status)
+          })
+      }
   }
 
   def dbList()(implicit tType: TournamentType): (String, Status) = {
