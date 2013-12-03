@@ -20,6 +20,8 @@ case class CreateGroup(id: String, data: Group)
 case class CreateBracket(id: String, data: Bracket)
 case class User(username: String, password: String, email: String)
 case class CreateUser(id: String, data: User)
+case class LoginRequest(username: String)
+case class LoginResponse(token: String)
 
 object TournamentType extends Enumeration {
   type TournamentType = Value
@@ -106,6 +108,20 @@ class App extends unfiltered.filter.Plan {
             val jsonString = write(user)
             val (id, status) = dbCreate(jsonString)
             (write(CreateUser(id = id, data = user)), status)
+          })
+      }
+
+    case req @ Path("/login") =>
+      implicit val tType = TournamentType.User
+      req match {
+        case POST(_) =>
+          out(() => {
+            val login: LoginRequest = read[LoginRequest](Body.string(req))
+            val (_, status): (String, Status) = dbRead(login.username)
+            if (status == 200)
+              (write(LoginResponse(token = "t0ken")), Ok)
+            else
+              (write(LoginResponse(token = "")), status)
           })
       }
   }
