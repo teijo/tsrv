@@ -106,7 +106,7 @@ class App extends unfiltered.filter.Plan {
           out(() => {
             val user: User = read[User](Body.string(req))
             val jsonString = write(user)
-            val (id, status) = dbCreate(jsonString)
+            val (id, status) = dbUpdate(user.username, jsonString)
             (write(CreateUser(id = id, data = user)), status)
           })
       }
